@@ -9,6 +9,8 @@
 #
 # 2019-12-07: Object-oriented, to enable multiple instances
 #             Removed disassembler. That can be moved somewhere separate
+# 2019-12-09: Relative memory addresses. Mode 2 means that the address
+#             is added to a base value, which can be modified by opcode 9
 #
 # Opcode table:
 #  1: ADD A B DEST - Adds A + B, result in DEST.
@@ -19,6 +21,7 @@
 #  6: JEZ A B      - If A is 0, set program counter to B
 #  7: TLT A B DEST - If A < B, store 1 in DEST. Otherwise store 0
 #  8: TEQ A B DEST - If A == B, store 1 in DEST. Otherwise store 0
+#  9: BAS A        - Add A to relative base
 # 99: HALT
 ################################################################################
 
@@ -29,6 +32,7 @@ class Intcomp:
         self.ram = []
         self.pM = [0, 0, 0]     #Parameter mode flags
         self.pc = 0             #Program counter
+        self.base = 0           #Relative Base
         for i in range(0, mem):
             self.ram.append(0)
 
@@ -41,6 +45,7 @@ class Intcomp:
     def clear(self):
         for i in range(0,len(self.ram)):
             self.ram[i] = 0
+        self.base = 0
 
     #Load program from console
     def load(self, program):
@@ -54,12 +59,21 @@ class Intcomp:
         self.load(file.readline())
         file.close()
 
-    #Fetch value from RAM. Will dereference pointers if mode flag is 0
+    #Fetch value from RAM. Behaviour governed by mode flag
     def fetch(self, param):
         if self.pM[param - 1] == 0:
             return self.ram[self.ram[self.pc + param]]
-        else:
+        elif self.pM[param - 1] == 1:
             return self.ram[self.pc + param]
+        elif self.pM[param - 1] == 2:
+            return self.ram[self.ram[self.pc + param] + self.base]
+
+    #Writes value to RAM. Behaviour governed by mode flag
+    def write(self, param, value):
+        if self.pM[param - 1] == 0:
+            self.ram[self.ram[self.pc+param]] = value
+        elif self.pM[param - 1] == 2:
+            self.ram[self.ram[self.pc+param] + self.base] = value
 
     #Run program
     def run(self):
@@ -72,13 +86,13 @@ class Intcomp:
             self.pM[1] = (self.ram[self.pc] // 1000) % 10
             self.pM[2] = (self.ram[self.pc] // 10000) % 10
             if op == 1:
-                self.ram[self.ram[self.pc+3]] = self.fetch(1) + self.fetch(2)
+                self.write(3, self.fetch(1) + self.fetch(2))
                 self.pc += 4
             elif op == 2:
-                self.ram[self.ram[self.pc+3]] = self.fetch(1) * self.fetch(2)
+                self.write(3, self.fetch(1) * self.fetch(2))
                 self.pc += 4
             elif op == 3:
-                self.ram[self.ram[self.pc+1]] = int(input("P> "))
+                self.write(1, int(input("P> ")))
                 self.pc += 2
             elif op == 4:
                 print(self.fetch(1))
@@ -88,11 +102,14 @@ class Intcomp:
             elif op == 6:
                 self.pc = self.fetch(2) if self.fetch(1) == 0 else self.pc + 3
             elif op == 7:
-                self.ram[self.ram[self.pc+3]] = 1 if self.fetch(1) < self.fetch(2) else 0
+                self.write(3, 1 if self.fetch(1) < self.fetch(2) else 0)
                 self.pc += 4
             elif op == 8:
-                self.ram[self.ram[self.pc+3]] = 1 if self.fetch(1) == self.fetch(2) else 0
+                self.write(3, 1 if self.fetch(1) == self.fetch(2) else 0)
                 self.pc += 4
+            elif op == 9:
+                self.base += self.fetch(1)
+                self.pc += 2
             elif op == 99:
                 print("END")
                 halt = True
@@ -100,7 +117,7 @@ class Intcomp:
                 print("ERROR UNKNOWN OPCODE", op, "AT ADDR", self.pc)
                 halt = True
 
-comp = Intcomp(1024)
+comp = Intcomp(4096)
 inp = "Input String"
 while inp != "EXIT":
     inp = input("> ")
