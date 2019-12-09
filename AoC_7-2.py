@@ -23,10 +23,9 @@ import threading
 import queue
 
 itcQ = [queue.Queue(),queue.Queue(),queue.Queue(),queue.Queue(),queue.Queue()]
-endQ = queue.Queue()
+endQ = [queue.Queue(),queue.Queue(),queue.Queue(),queue.Queue(),queue.Queue()]
 currentSetting = (0,0,0,0,0)
 results = dict()
-exitFlag = 0
 
 class Intcomp(threading.Thread):
 
@@ -91,7 +90,7 @@ class Intcomp(threading.Thread):
                 self.pc += 2
             elif op == 4:
                 if self.threadID == 4:
-                    results[fullPhase] = self.fetch(1)
+                    results[currentSetting] = self.fetch(1)
                     itcQ[0].put(self.fetch(1))
                 else:
                     itcQ[self.threadID+1].put(self.fetch(1))
@@ -107,36 +106,33 @@ class Intcomp(threading.Thread):
                 self.ram[self.ram[self.pc+3]] = 1 if self.fetch(1) == self.fetch(2) else 0
                 self.pc += 4
             elif op == 99:
-                if self.threadID == 4:
-                    endQ.put(1)
+                endQ[self.threadID].put(1)
                 halt = True
             else:
-                print("ERROR UNKNOWN OPCODE", op, "AT ADDR", self.pc, "IN THREAD", self.threadID)
+                print("ERROR UNKNOWN OPCODE", op, "AT ADDR", self.pc, "IN THREAD", self.name)
                 halt = True
-        endThread(self.name)
-
-def endThread(name):
-    if exitFlag:
-        name.exit()
-
+        
 def findmaxamp():
-    comps = []
-    itcQ[0].put(0)
+    global currentSetting
     names = ["A","B","C","D","E"]
-    for i in range(5):
-        comps.append(Intcomp(i, names[i], 2048))
-        comps[i].loadfile("AMPLIFIER")
 
-    phaseSettings = list(itertools.permutations([5,6,7,8,9]))
-    #phaseSettings = [5,6,7,8,9]
+    phaseSettings = list(itertools.permutations([9,8,7,6,5]))
     for setting in phaseSettings:
+        comps = []
         currentSetting = setting
         for i, s in zip(range(5),setting):
-            itcQ[i].put(s)
+            comps.append(Intcomp(i, names[i], 2048))
+            comps[i].loadfile("AMPLIFIER")
             comps[i].start()
-            comps[i].join()
-        endQ.get()
+            itcQ[i].put(s)
+        itcQ[0].put(0)
+        for nQ in endQ:
+            #Read from all end queues to block until threads end
+            nQ.get(True)
+        for i in range(5):
+            #Inter-thread queues weren't always clear after their thread ended.
+            #Reset them here.
+            itcQ[i] = queue.Queue()
     print(max(results.items(), key=operator.itemgetter(1)))
-            
-
+    
 findmaxamp()
