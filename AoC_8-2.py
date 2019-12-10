@@ -15,29 +15,19 @@ width = 25
 height = 6
 layersize = width * height
 
-def findpixelvalue(i, img, layercount):
+def printpixel(i, img, layercount):
     for j in range(layercount):
         if img[j][i] != '2':
-            return img[j][i]
+            print('█' if img[j][i] == '0' else ' ', end='')
+            return
 
 file = open("AoC_8-1.txt","r")
-data = file.read()
+data = list(file.read())
 file.close()
 
 layercount = len(data)//(layersize)
-layers = []
+layers = [data[i*layersize:(i+1)*layersize] for i in range(layercount)]
 
-#split data into list of layers
-for i in range(layercount):
-    layers.append(list(data[i*layersize:i*layersize + layersize]))
-
-#now merge
 for i in range(layersize):
-    if layers[0][i] == '2':
-        layers[0][i] = findpixelvalue(i, layers, layercount)
-
-#Display image
-for i in range(height):
-    for p in layers[0][i*width:i*width+width]:
-        print('█' if p == '0' else ' ', end='')
-    print()
+    printpixel(i,layers,layercount)
+    print(end = '\n' if (i+1)%width==0 else '')
