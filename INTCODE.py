@@ -33,8 +33,7 @@ class Intcomp:
         self.pM = [0, 0, 0]     #Parameter mode flags
         self.pc = 0             #Program counter
         self.base = 0           #Relative Base
-        for i in range(0, mem):
-            self.ram.append(0)
+        self.ram = [0 for i in range(mem)]
 
     #Dumps memory to screen
     def list(self):
@@ -43,8 +42,7 @@ class Intcomp:
 
     #Sets all memory to 0
     def clear(self):
-        for i in range(0,len(self.ram)):
-            self.ram[i] = 0
+        self.ram = [0 for i in range(len(self.ram))]
         self.base = 0
 
     #Load program from console
