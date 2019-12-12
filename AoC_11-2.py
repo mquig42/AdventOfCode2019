@@ -27,10 +27,7 @@
 ################################################################################
 import threading
 import queue
-
-#Program I/O queues
-inQ = queue.Queue()     #Program input
-outQ = queue.Queue()    #Program output
+import INTCODE_T
 
 #Robot position and state
 grid = [['.' for y in range(6)] for x in range(43)]
@@ -39,118 +36,22 @@ grid[0][0] = '#'
 dirs = ['U','R','D','L']
 d = 0
 
-class Intcomp(threading.Thread):
-
-    #mem is RAM size
-    def __init__(self, threadID, name, mem):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.ram = []
-        self.pM = [0, 0, 0]     #Parameter mode flags
-        self.pc = 0             #Program counter
-        self.base = 0           #Relative Base
-        self.ram = [0 for i in range(mem)]
-
-    #Dumps memory to screen
-    def list(self):
-        for i in range(0,len(self.ram),4):
-            print("{0:4d}: {1}".format(i,self.ram[i:i+4]))
-
-    #Sets all memory to 0
-    def clear(self):
-        self.ram = [0 for i in range(len(self.ram))]
-        self.base = 0
-
-    #Load program from console
-    def load(self, program):
-        pL = program.split(',')
-        for i in range(0,len(pL)):
-            self.ram[i] = int(pL[i])
-
-    #Load program from file
-    def loadfile(self, filename):
-        file = open(filename,'r')
-        self.load(file.readline())
-        file.close()
-
-    #Fetch value from RAM. Behaviour governed by mode flag
-    def fetch(self, param):
-        if self.pM[param - 1] == 0:
-            return self.ram[self.ram[self.pc + param]]
-        elif self.pM[param - 1] == 1:
-            return self.ram[self.pc + param]
-        elif self.pM[param - 1] == 2:
-            return self.ram[self.ram[self.pc + param] + self.base]
-
-    #Writes value to RAM. Behaviour governed by mode flag
-    def write(self, param, value):
-        if self.pM[param - 1] == 0:
-            self.ram[self.ram[self.pc+param]] = value
-        elif self.pM[param - 1] == 2:
-            self.ram[self.ram[self.pc+param] + self.base] = value
-
-    #Run program
-    def run(self):
-        halt = False
-        self.pc = 0
-        op = 0
-        while not halt:
-            op = self.ram[self.pc] % 100
-            self.pM[0] = (self.ram[self.pc] // 100) % 10
-            self.pM[1] = (self.ram[self.pc] // 1000) % 10
-            self.pM[2] = (self.ram[self.pc] // 10000) % 10
-            if op == 1:
-                self.write(3, self.fetch(1) + self.fetch(2))
-                self.pc += 4
-            elif op == 2:
-                self.write(3, self.fetch(1) * self.fetch(2))
-                self.pc += 4
-            elif op == 3:
-                self.write(1, inQ.get(True))
-                self.pc += 2
-            elif op == 4:
-                outQ.put(self.fetch(1))
-                self.pc += 2
-            elif op == 5:
-                self.pc = self.fetch(2) if self.fetch(1) != 0 else self.pc + 3
-            elif op == 6:
-                self.pc = self.fetch(2) if self.fetch(1) == 0 else self.pc + 3
-            elif op == 7:
-                self.write(3, 1 if self.fetch(1) < self.fetch(2) else 0)
-                self.pc += 4
-            elif op == 8:
-                self.write(3, 1 if self.fetch(1) == self.fetch(2) else 0)
-                self.pc += 4
-            elif op == 9:
-                self.base += self.fetch(1)
-                self.pc += 2
-            elif op == 99:
-                outQ.put(99)
-                halt = True
-            else:
-                print("ERROR UNKNOWN OPCODE", op, "AT ADDR", self.pc)
-                outQ.put(99)
-                halt = True
-
-#Robot code
-
-#If I only had a brain
-comp = Intcomp(1, "BRAIN", 4096)
+#Init brain
+comp = INTCODE_T.Intcomp_T(1, "BRAIN", 4096)
 comp.loadfile("PAINT")
 comp.start()
 
 paintedSquares = dict()
 
 while True:
-    inQ.put(0 if grid[pos[0]][pos[1]] == '.' else 1)
-    colour = outQ.get(True)
-    if colour == 99:
+    comp.inQ.put(0 if grid[pos[0]][pos[1]] == '.' else 1)
+    colour = comp.outQ.get(True)
+    if colour == "END":
         break
     grid[pos[0]][pos[1]] = '.' if colour == 0 else '#'
     paintedSquares[(pos[0],pos[1])] = grid[pos[0]][pos[1]]
-    turn = outQ.get(True)
-    if turn == 99:
+    turn = comp.outQ.get(True)
+    if turn == "END":
         break
     d = (d + (turn * 2 - 1)) % 4
     if d == 0:
