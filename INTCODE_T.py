@@ -10,11 +10,13 @@
 # Will send program outputs (opcode 4) to outQ,
 # as well as "END" when the program ends
 #
+# 2019-12-13: Optional prompt for input. Will put "P>" on outQ
+#
 # Opcode table:
 #  1: ADD A B DEST - Adds A + B, result in DEST.
 #  2: MUL A B DEST - Multiplies A * B, result in DEST
-#  3: INP DEST     - Reads keyboard input to DEST
-#  4: OUT A        - Print A
+#  3: INP DEST     - Reads input to DEST
+#  4: OUT A        - put A on output queue
 #  5: JNZ A B      - If A is not 0, set program counter to B
 #  6: JEZ A B      - If A is 0, set program counter to B
 #  7: TLT A B DEST - If A < B, store 1 in DEST. Otherwise store 0
@@ -28,10 +30,11 @@ import queue
 class Intcomp_T(threading.Thread):
 
     #mem is RAM size
-    def __init__(self, threadID, name, mem):
+    def __init__(self, threadID, name, mem, prompt_for_input = False):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
+        self.prompt_for_input = prompt_for_input
         self.inQ = queue.Queue()    #Input queue
         self.outQ = queue.Queue()   #Output queue
         self.ram = []               #Main memory
@@ -81,6 +84,8 @@ class Intcomp_T(threading.Thread):
                 self.write(3, self.fetch(1) * self.fetch(2))
                 self.pc += 4
             elif op == 3:
+                if self.prompt_for_input:
+                    self.outQ.put('P>')
                 self.write(1, self.inQ.get(True))
                 self.pc += 2
             elif op == 4:
