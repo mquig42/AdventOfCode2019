@@ -1,0 +1,9 @@
+R,10,R,8,L,10,L,10,R,8,L,6,L,6,R,8,L,6,L,6,R,10,R,8,L,10,L,10,L,10,R,10,L,6,R,8,L,6,L,6,L,10,R,10,L,6,L,10,R,10,L,6,R,8,L,6,L,6,R,10,R,8,L,10,L,10
+A,B,B,A,C,B,C,C,B,A
+
+      vvvvvvvvvvvvvvvvvvvv
+Main: A,B,B,A,C,B,C,C,B,A
+   A: R,10,R,8,L,10,L,10
+   B: R,8,L,6,L,6
+   C: L,10,R,10,L,6
+      ^^^^^^^^^^^^^^^^^^^^

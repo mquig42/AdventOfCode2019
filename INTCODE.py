@@ -21,7 +21,7 @@
 #  6: JEZ A B      - If A is 0, set program counter to B
 #  7: TLT A B DEST - If A < B, store 1 in DEST. Otherwise store 0
 #  8: TEQ A B DEST - If A == B, store 1 in DEST. Otherwise store 0
-#  9: BAS A        - Add A to relative base
+#  9: ARB A        - Add A to relative base
 # 99: HALT
 ################################################################################
 
@@ -127,5 +127,9 @@ while inp != "EXIT":
         comp.load(input("PROGRAM: "))
     elif inp == "LOADFILE":
         comp.loadfile(input("FILENAME: "))
+    elif inp == "POKE":
+        addr = int(input("ADDR: "))
+        val = int(input("VAL: "))
+        comp.ram[addr] = val
     elif inp == "RUN":
         comp.run()
