@@ -32,11 +32,7 @@ inpstr = file.readline()
 file.close()
 
 #Concatenate
-buffer = io.StringIO()
-for i in range(10000):
-    buffer.write(inpstr)
-inpstr = buffer.getvalue()
-buffer.close()
+inpstr = inpstr * 10000
 
 offset = int(inpstr[0:7])
 inp = [int(c) for c in inpstr]
