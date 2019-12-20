@@ -11,6 +11,8 @@
 # as well as "END" when the program ends
 #
 # 2019-12-13: Optional prompt for input. Will put "P>" on outQ
+# 2019-12-19: Added load function that takes a list of ints. Should be faster
+#             than reading from file
 #
 # Opcode table:
 #  1: ADD A B DEST - Adds A + B, result in DEST.
@@ -42,6 +44,11 @@ class Intcomp_T(threading.Thread):
         self.pc = 0                 #Program counter
         self.base = 0               #Relative Base
         self.ram = [0 for i in range(mem)]
+
+    #Load program from list of int
+    def load(self, program):
+        for i in range(len(program)):
+            self.ram[i] = program[i]
 
     #Load program from file
     def loadfile(self, filename):
