@@ -20,7 +20,6 @@
 # it will take to fill with oxygen once the system is repaired
 ################################################################################
 import INTCODE_T
-import random
 import time
 from asciimatics.screen import Screen
 
