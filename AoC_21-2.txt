@@ -1,0 +1,16 @@
+        : In this puzzle, the robot can jump onto a space that it's impossible
+		: to continue from. If it jumps to D, it can do one of 2 things next
+		: 1. walk 1 space to E
+		: 2. jump 4 spaces to H
+		: So, only jump if E or H are true
+		: This condition can be added to the end of part 1's program.
+        : J = (D * !(A*B*C)) * (E+H)
+NOT J T : J is False, so put a True value in T
+AND A T
+AND B T
+AND C T : T is now False if there are any holes in the next 3 spaces, otherwise True
+NOT T T : Invert T
+AND D T : T is now True if D is True and there are holes in A, B, or C
+OR  E J : Use J as temp storage to evaluate (E OR H)
+OR  H J
+AND T J : Combine results of both conditions into J

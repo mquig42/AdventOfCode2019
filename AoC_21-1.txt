@@ -1,0 +1,9 @@
+        : Jump if there are holes in A, B, or C, and no hole in D
+		: or, in Boolean, J = D * !(A*B*C)
+NOT J T : J is False, so put a True value in T
+AND A T
+AND B T
+AND C T : T is now False if there are any holes in the next 3 spaces, otherwise True
+NOT T T : Invert T
+AND D T : T is now True if D is True and there are holes in A, B, or C
+OR T J  : Jump if T is True
