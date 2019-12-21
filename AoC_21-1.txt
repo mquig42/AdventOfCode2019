@@ -1,5 +1,5 @@
         : Jump if there are holes in A, B, or C, and no hole in D
-		: or, in Boolean, J = D * !(A*B*C)
+        : or, in Boolean, J = D * !(A*B*C)
 NOT J T : J is False, so put a True value in T
 AND A T
 AND B T
