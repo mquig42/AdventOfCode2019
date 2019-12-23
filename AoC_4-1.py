@@ -23,4 +23,4 @@ def fits(x):
     return double and increasing
 
 matches = [i for i in range(134792, 675811) if fits(i)]
-print(matches)
+print(len(matches))
