@@ -1,78 +1,63 @@
 ################################################################################
-# AoC_23-2.py
+# AoC_23-2b.py
 # 2019-12-27
 # Mike Quigley
 #
 # https://adventofcode.com/2019/day/23
 #
 # Simulates network of 50 Intcode machines communicating with each other
-# This problem is timing-sensitive. Program produces a wide variety of
-# incorrect answers rather than a single correct one.
+# Try simpler network model, using a main loop and message queue instead of
+# 50 different threads. Also don't use prompt_for_input, instead always put
+# any available input on inQ, and check if outQ is empty before reading.
 ################################################################################
-import threading
-import queue
 import INTCODE_T
+import queue
+import time
 
-network = dict()
-idle = [0 for i in range(50)]
+#Init and start Intcode threads
+comps = [INTCODE_T.Intcomp_T(i,'CPU'+str(i),4096) for i in range(50)]
+for c in comps:
+    c.loadfile('NIC')
+    c.start()
+    c.inQ.put(c.threadID)
+    c.inQ.put(-1)
 
-class nic(threading.Thread):
-    def __init__(self, threadID):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = 'NIC' + str(threadID)
-        self.compy = INTCODE_T.Intcomp_T(threadID + 50, 'COMP'+str(threadID), 4096, prompt_for_input=True)
-        self.compy.loadfile('NIC')
-        self.inQ = queue.Queue()
+#Message queues and NAT packet
+messageQ = [queue.Queue() for i in range(50)]
+natpack = (0,0)
 
-    def run(self):
-        self.compy.start()
-        self.compy.outQ.get()
-        self.compy.inQ.put(self.threadID)
-
-        while True:
-            out = self.compy.outQ.get()
-            if out == 'P>':
-                #Request packet
-                if self.inQ.empty():
-                    idle[self.threadID] = 1
-                    self.compy.inQ.put(-1)
-                else:
-                    packet = self.inQ.get()
-                    self.compy.inQ.put(packet[0])
-                    self.compy.inQ.put(packet[1])
-            elif out == 'END':
-                #Program ended
-                break
+#Main loop
+while True:
+    for i in range(len(comps)):
+        #Add any available packets to inQ
+        while not messageQ[i].empty():
+            pkt = messageQ[i].get()
+            comps[i].inQ.put(pkt[0])
+            comps[i].inQ.put(pkt[1])
+        #Read any output packets and route them to the correct message queue
+        while not comps[i].outQ.empty():
+            dest = comps[i].outQ.get()
+            if dest == 255:
+                natpack = (comps[i].outQ.get(), comps[i].outQ.get())
             else:
-                #Send packet
-                x = self.compy.outQ.get()
-                y = self.compy.outQ.get()
-                if out != 255:
-                    network[out].inQ.put((x,y))
-                    idle[out] = 0
-                else:
-                    network[out].inp = (x,y)
+                messageQ[dest].put((comps[i].outQ.get(), comps[i].outQ.get()))
 
-class nat(threading.Thread):
-    def __init__(self, threadID):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = 'NIC255'
-        self.inp = (0,0)
+    #Let Intcode threads process their packets
+    time.sleep(0.5)
 
-    def run(self):
-        while True:
-            if sum(idle) == 50:
-                if self.inp != (0,0):
-                    print(self.inp[1])
-                    network[0].inQ.put(self.inp)
-                    idle[0] = 0
+    #Check all message and output queues to see if they're all empty
+    all_empty = True
+    for q in messageQ:
+        if not q.empty():
+            all_empty = False
+    for c in comps:
+        if not c.outQ.empty():
+            all_empty = False
 
-network[255] = nat(255)
+    #If every queue is empty, the network is idle. Have the NAT send its packet
+    if all_empty:
+        print(natpack[1])
+        comps[0].inQ.put(natpack[0])
+        comps[0].inQ.put(natpack[1])
 
-for i in range(50):
-    network[i] = nic(i)
-for i in range(50):
-    network[i].start()
-network[255].start()
+
