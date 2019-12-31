@@ -40,7 +40,7 @@ def runterm(comp):
         else:
             print(outp)
 
-comp = INTCODE_T.Intcomp_T(1,'comp',4096,prompt_for_input=True)
+comp = INTCODE_T.Intcomp_T(1,'comp',8192,prompt_for_input=True)
 inp = "Input String"
 while inp != "EXIT":
     inp = input("> ")

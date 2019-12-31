@@ -14,7 +14,9 @@ from asciimatics.screen import Screen
 import time
 
 cpu = INTCODE_T.Intcomp_T(1, "CPU", 4096, True)
-tiles = [' ','X','B','=','o']
+#tiles = [' ','█','■','▬','●']  #Solid
+#tiles = [' ','X','B','=','o']  #Text
+tiles = [' ','▒','▲','▬','●']   #Christmas Tree
 colours = [0,1,2,7,3]
 score = 0
 
@@ -31,21 +33,21 @@ def arcade(screen):
         if x == "P>":
             #This game is tricky.
             #De-comment this to have the paddle auto-track the ball
-            #if paddleX < ballX:
-            #    cpu.inQ.put(1)
-            #elif paddleX > ballX:
-            #    cpu.inQ.put(-1)
-            #else:
-            #    cpu.inQ.put(0)
-            screen.wait_for_input(5)
-            joy = screen.get_key()
-            if joy == ord('a'):
-                cpu.inQ.put(-1)
-            elif joy == ord('d'):
+            if paddleX < ballX:
                 cpu.inQ.put(1)
+            elif paddleX > ballX:
+                cpu.inQ.put(-1)
             else:
                 cpu.inQ.put(0)
-            time.sleep(0.2)
+            #screen.wait_for_input(5)
+            #joy = screen.get_key()
+            #if joy == ord('a'):
+            #    cpu.inQ.put(-1)
+            #elif joy == ord('d'):
+            #    cpu.inQ.put(1)
+            #else:
+            #    cpu.inQ.put(0)
+            time.sleep(0.05)
             continue
         y = cpu.outQ.get(True)
         tile = cpu.outQ.get(True)
@@ -53,7 +55,7 @@ def arcade(screen):
         if x == -1:
             score = tile
             screen_complete = True
-            screen.print_at('{0}'.format(tile), 0, 25, colour=7)
+            screen.print_at('{0:05d}'.format(tile), 0, 25, colour=7)
         else:
             if tile == 3:
                 paddleX = x

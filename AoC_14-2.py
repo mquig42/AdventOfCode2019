@@ -16,6 +16,7 @@
 # Find out how much fuel can be made from 1000000000000 units of ore
 ################################################################################
 import math
+import time
 
 class reaction:
     #Inits a reaction object from the description string in today's file
@@ -45,8 +46,9 @@ def maxinput(inputlist, reactions):
     maxproduct = ''
     maxproduct_n = 0
     for i in inputlist:
-        if steps_to_ore(i, reactions) > maxproduct_n:
-            maxproduct_n = steps_to_ore(i, reactions)
+        s = steps_to_ore(i, reactions)
+        if s > maxproduct_n:
+            maxproduct_n = s
             maxproduct = i
     return maxproduct
 
@@ -78,6 +80,7 @@ def ore_for_fuel(n, reactions):
 
     return fuelinputs['ORE']
 
+start_time = time.time()
 reactions = dict()
 file = open('AoC_14.txt','r')
 for line in file:
@@ -99,4 +102,5 @@ while True:
     if step == 0:
         break
 print(i)
+print('Elapsed Time:', '{0:0.3f}s'.format(time.time() - start_time))
     
