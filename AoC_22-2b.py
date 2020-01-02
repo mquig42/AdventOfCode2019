@@ -8,6 +8,7 @@
 #
 # This program should help with math, and be able to solve both parts of day 22
 ################################################################################
+import time
 
 #Reads the shuffle instructions file and returns a list of tuples
 #representing the shuffles as (a,b) of f(x)=(a*x+b)%size
@@ -70,6 +71,9 @@ def solvepart2(filename):
     Fk = (A, B)
     return ((slot - B) * inv(A, m)) % m
 
+starttime = time.time()
+
 print('Part 1:', solvepart1('AoC_22.txt'))
 print('Part 2:', solvepart2('AoC_22.txt'))
+print('Elapsed time: {0:0.3f}s'.format(time.time()-starttime))
         
